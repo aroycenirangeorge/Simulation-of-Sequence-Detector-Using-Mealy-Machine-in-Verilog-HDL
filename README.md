@@ -28,60 +28,69 @@ For example, a **sequence detector** that detects `"1011"`:
 <img width="363" height="550" alt="image" src="https://github.com/user-attachments/assets/7861102e-c301-422a-bfa8-d8d887a8652b" />
 
 ## Verilog Code
-```
-// Mealy Sequence Detector for sequence "11011"
-module mealy_seq_detector_11011 (
-    input clk,
-    input reset,
-    input x,
-    output reg z
-);
+```verilog
+module mealy_sequence(clk, rst, in, out);
+    input clk, rst, in;
+    output reg out;
+    parameter A = 2'b00,
+              B = 2'b01,
+              C = 2'b10,
+              D = 2'b11;
+    reg [1:0] current_state, next_state;
 
-    // State encoding
-    parameter S0 = 3'b000,
-              S1 = 3'b001,
-              S2 = 3'b010,
-              S3 = 3'b011,
-              S4 = 3'b100,
-              S5 = 3'b101;
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            current_state <= A;
+        else
+            current_state <= next_state;
+    end
 
-    reg [2:0] state, next_state;
+    always @(*) begin
+        case (current_state)
+            A: next_state = (in == 0) ? A : B;
+            B: next_state = (in == 1) ? B : C;
+            C: next_state = (in == 0) ? A : D;
+            D: next_state = (in == 1) ? B : A;
+            default: next_state = A;
+        endcase
+    end
 
-
-
-
+    always @(*) begin
+        out = (current_state == D) ? 1 : 0;
     end
 endmodule
 ```
 ## Testbench
-```
-module tb_mealy_seq_detector_11011;
-    reg clk, reset, x;
-    wire z;
+```verilog
+module mealy_sequence_tb;
 
-    mealy_seq_detector_11011 uut (
-        .clk(clk),
-        .reset(reset),
-        .x(x),
-        .z(z)
-    );
-
-    // Clock generation
-    initial begin
-        clk = 0;
-        forever #5 clk = ~clk;
+    reg clk, rst, in;
+    wire out;
+    
+    mealy_sequence uut (clk,rst,in,out);
+    
+    initial  clk = 0;
+    always #5 clk = ~clk;   
+    initial 
+    begin
+    in=0;
+    rst=0;
+    in=1;#10;
+    in=0;#10;
+    in=1;#10;
+    in=0;#10;
+    in=0;#10;
+    in=1;#10;
+    in=0;#10;
+    in=1;#10;
+    $finish;
     end
-
-    // Stimulus
-    initial begin
-        reset = 1; x = 0;
-
 endmodule
 ```
 ## Simulation Output 
 ---
 
-Paste the output here
+<img width="1280" height="720" alt="image" src="https://github.com/user-attachments/assets/0193c8a7-b8af-4429-a958-333258b5dac0" />
 
 ---
 ## Result
